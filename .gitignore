@@ -1,6 +1,5 @@
 # custom
 .vscode/*
-!.vscode/launch.json
 
 node_modules/**/*
 .expo/*
