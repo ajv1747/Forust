@@ -1,0 +1,83 @@
+#if( $util.isNull($ctx.source.id) )
+  #set( $result = {
+  "items":   []
+} )
+  #return($result)
+#else
+  #set( $limit = $util.defaultIfNull($context.args.limit, 100) )
+  #set( $query = {
+  "expression": "#partitionKey = :partitionKey",
+  "expressionNames": {
+      "#partitionKey": "treeID"
+  },
+  "expressionValues": {
+      ":partitionKey": {
+          "S": "$context.source.id"
+    }
+  }
+} )
+  ## [Start] Applying Key Condition **
+  #if( !$util.isNull($ctx.args.adminID) && !$util.isNull($ctx.args.adminID.beginsWith) )
+    #set( $query.expression = "$query.expression AND begins_with(#sortKey, :sortKey)" )
+    $util.qr($query.expressionNames.put("#sortKey", "adminID"))
+    $util.qr($query.expressionValues.put(":sortKey", { "S": "$ctx.args.adminID.beginsWith" }))
+  #end
+  #if( !$util.isNull($ctx.args.adminID) && !$util.isNull($ctx.args.adminID.between) )
+    #set( $query.expression = "$query.expression AND #sortKey BETWEEN :sortKey0 AND :sortKey1" )
+    $util.qr($query.expressionNames.put("#sortKey", "adminID"))
+    $util.qr($query.expressionValues.put(":sortKey0", { "S": "$ctx.args.adminID.between[0]" }))
+    $util.qr($query.expressionValues.put(":sortKey1", { "S": "$ctx.args.adminID.between[1]" }))
+  #end
+  #if( !$util.isNull($ctx.args.adminID) && !$util.isNull($ctx.args.adminID.eq) )
+    #set( $query.expression = "$query.expression AND #sortKey = :sortKey" )
+    $util.qr($query.expressionNames.put("#sortKey", "adminID"))
+    $util.qr($query.expressionValues.put(":sortKey", { "S": "$ctx.args.adminID.eq" }))
+  #end
+  #if( !$util.isNull($ctx.args.adminID) && !$util.isNull($ctx.args.adminID.lt) )
+    #set( $query.expression = "$query.expression AND #sortKey < :sortKey" )
+    $util.qr($query.expressionNames.put("#sortKey", "adminID"))
+    $util.qr($query.expressionValues.put(":sortKey", { "S": "$ctx.args.adminID.lt" }))
+  #end
+  #if( !$util.isNull($ctx.args.adminID) && !$util.isNull($ctx.args.adminID.le) )
+    #set( $query.expression = "$query.expression AND #sortKey <= :sortKey" )
+    $util.qr($query.expressionNames.put("#sortKey", "adminID"))
+    $util.qr($query.expressionValues.put(":sortKey", { "S": "$ctx.args.adminID.le" }))
+  #end
+  #if( !$util.isNull($ctx.args.adminID) && !$util.isNull($ctx.args.adminID.gt) )
+    #set( $query.expression = "$query.expression AND #sortKey > :sortKey" )
+    $util.qr($query.expressionNames.put("#sortKey", "adminID"))
+    $util.qr($query.expressionValues.put(":sortKey", { "S": "$ctx.args.adminID.gt" }))
+  #end
+  #if( !$util.isNull($ctx.args.adminID) && !$util.isNull($ctx.args.adminID.ge) )
+    #set( $query.expression = "$query.expression AND #sortKey >= :sortKey" )
+    $util.qr($query.expressionNames.put("#sortKey", "adminID"))
+    $util.qr($query.expressionValues.put(":sortKey", { "S": "$ctx.args.adminID.ge" }))
+  #end
+  ## [End] Applying Key Condition **
+{
+      "version": "2018-05-29",
+      "operation": "Query",
+      "query":     $util.toJson($query),
+      "scanIndexForward":     #if( $context.args.sortDirection )
+      #if( $context.args.sortDirection == "ASC" )
+true
+      #else
+false
+      #end
+    #else
+true
+    #end,
+      "filter":     #if( $context.args.filter )
+$util.transform.toDynamoDBFilterExpression($ctx.args.filter)
+    #else
+null
+    #end,
+      "limit": $limit,
+      "nextToken":     #if( $context.args.nextToken )
+$util.toJson($context.args.nextToken)
+    #else
+null
+    #end,
+      "index": "adminByTree"
+  }
+#end

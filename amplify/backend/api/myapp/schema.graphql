@@ -1,0 +1,92 @@
+type Tree @model {
+  id: ID!
+  name: String!
+  description: String
+  #edited- has many
+  posts: [Post] @connection(keyName: "byTree", fields: ["id"]) #add createdAt at some point
+  #edited- many-to-many
+  members: [TreeMemberConnector] @connection(keyName: "byTree", fields:["id"])
+  administrators: [TreeAdminConnector] @connection(keyName: "adminByTree", fields:["id"])
+  parents: [ParentChildConnector] @connection(keyName: "parentsByTree", fields:["id"])
+  children: [ParentChildConnector] @connection(keyName: "childrenByTree", fields:["id"])
+}
+type Post @model 
+  @key(name: "byMember", fields: ["memberID"]) 
+  @key(name: "byTree", fields: ["treeID"]){
+    id: ID!
+    text: String
+    picIds: [ID]
+    likes: Int!
+    memberID: ID!
+    treeID: ID!
+    #edited- has many
+    comments: [Comment] @connection(keyName: "byPost", fields: ["id"])
+    # belongs to
+    member: Member! @connection(fields: ["memberID"])
+    tree: Tree! @connection(fields: ["treeID"])
+    # many-to-many
+    likedBy: [PostMemberConnector] @connection(fields: ["id"])
+}
+type Member @model {
+  id: ID!
+  aviId: ID
+  #edited- has many
+  posts: [Post] @connection(keyName: "byMember", fields: ["id"])
+  #edited- many-to-many
+  trees: [TreeMemberConnector] @connection(keyName: "byMember", fields: ["id"])
+  #need to cahnge this- does not really do anything useful
+  adminRights: [TreeAdminConnector] @connection(keyName: "byAdmin", fields: ["id"])
+  likedPosts: [PostMemberConnector] @connection(keyName: "byMember", fields: ["id"])
+}
+type Comment @model @key(name: "byPost", fields: ["postID", "content"]) {
+  id: ID!
+  content: String
+  memberID: ID!
+  postID: ID!
+  #edited- has one
+  member: Member! @connection(fields: ["memberID"])
+  #edited- belongs to
+  post: Post! @connection(fields: ["postID"])
+}
+# many to many
+type TreeMemberConnector @model # (queries: null) is an options but we might want this
+  @key(name: "byTree", fields: ["treeID", "memberID"])
+  @key(name: "byMember", fields: ["memberID", "treeID"]) 
+{
+  # tree id and member id need to be optional
+  id: ID!
+  treeID: ID!
+  memberID: ID!
+  tree: Tree! @connection(fields: ["treeID"])
+  member: Member! @connection(fields: ["memberID"])
+}
+type TreeAdminConnector @model 
+  @key(name: "adminByTree", fields: ["treeID", "adminID"])
+  @key(name: "byAdmin", fields: ["adminID", "treeID"])
+{
+  id: ID!
+  treeID: ID!
+  adminID: ID!
+  tree: Tree! @connection(fields: ["treeID"])
+  admin: Member! @connection(fields: ["adminID"])
+}
+type ParentChildConnector @model 
+  @key(name: "parentsByTree", fields:["childID", "parentID"])
+  @key(name: "childrenByTree", fields:["parentID", "childID"])
+{
+  id: ID!
+  parentID: ID!
+  childID: ID!
+  parent: Tree! @connection(fields: ["parentID"])
+  child: Tree! @connection(fields: ["childID"])
+}
+type PostMemberConnector @model
+  @key(name: "byPost", fields: ["postID", "memberID"])
+  @key(name: "byMember", fields: ["memberID", "postID"])
+{
+  id: ID!
+  postID: ID!
+  memberID: ID!
+  post: Post! @connection(fields: ["postID"])
+  member: Member! @connection(fields: ["memberID"])
+}
