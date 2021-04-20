@@ -2,6 +2,7 @@
 .vscode/*
 .vscode/
 
+#auto (think expo does this)
 node_modules/**/*
 .expo/*
 npm-debug.*
